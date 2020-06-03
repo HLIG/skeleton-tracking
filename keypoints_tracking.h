@@ -15,14 +15,28 @@ public:
 		    this->X.push_back(keypoints[i]);
    		    this->Y.push_back(keypoints[i+1]);
 		    this->C.push_back(keypoints[i+2]);
+
 		}
+		this->center_point.x=(*std::min_element(X.begin(),X.end())+
+							*std::max_element(X.begin(),X.end()))/2;
+		this->center_point.y=(*std::min_element(Y.begin(),Y.end())+
+							*std::max_element(Y.begin(),Y.end()))/2;
+	}
+	void center_point_update()
+	{
+		//对骨架外界矩形进行更新
+		this->center_point.x=(*std::min_element(X.begin(),X.end())+
+							*std::max_element(X.begin(),X.end()))/2;
+		this->center_point.y=(*std::min_element(Y.begin(),Y.end())+
+							*std::max_element(Y.begin(),Y.end()))/2;
 	}
 	int keypoints_num;
 	std::vector<double> X;
 	std::vector<double> Y;
 	std::vector<double> C;
+	cv::Point center_point;//外接矩形框中心
 };
-double calculate_OKS(Keypoints skeleton1,Keypoints skeleton2);
+
 class Single_Skeleton
 {
 	//单人骨架跟踪类

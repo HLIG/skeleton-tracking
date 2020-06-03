@@ -6,13 +6,15 @@ set( CMAKE_INCLUDE_CURRENT_DIR ON )
 set( CMAKE_AUTOMOC ON )
 set( CMAKE_BUILD_TYPE Release )
 
-#set( OpenCV_DIR /usr/local/opencv4.2/lib/cmake/opencv4/)
+set( OpenCV_DIR /usr/local/opencv4.2/lib/cmake/opencv4/)
 find_package( OpenCV  REQUIRED)
 set(keypoints_tracking_src	${CMAKE_CURRENT_SOURCE_DIR}/keypoints_tracking.cpp
 							${CMAKE_CURRENT_SOURCE_DIR}/keypoints_tracking.h
 							${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
 			#PARENT_SCOPE
 )
+
+add_subdirectory(munkres)
 
 
 
@@ -21,6 +23,7 @@ add_executable ( keypoints_tracking ${keypoints_tracking_src}  )
 
 target_link_libraries(keypoints_tracking PUBLIC 
 	-Wl,--start-group
+	munkres
 	${OpenCV_LIBS}
 	-Wl,--end-group
 	)

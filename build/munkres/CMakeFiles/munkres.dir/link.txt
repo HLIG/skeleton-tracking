@@ -1,0 +1,2 @@
+/usr/bin/ar qc libmunkres.a  
+/usr/bin/ranlib libmunkres.a
