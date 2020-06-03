@@ -9,12 +9,13 @@
 
 using namespace std;
 using namespace cv;
-const static int keypoints_num=15;//在删减不必要的关键点之后，还剩下15个关键点
+const static int keypoints_num=14;//在删减不必要的关键点之后，还剩下14个关键点
 int main()
 {
 	int keypoints_num= count_keypoints_num();
-	Keypoints Keypoints1(keypoints_num);
-	cout<<"Keypoints1.size()"<<Keypoints1.X.size()<<endl;
+	cout<<"keypoints_num"<<keypoints_num<<endl;
+	//Keypoints Keypoints1(keypoints_num);
+	//cout<<"Keypoints1.size()"<<Keypoints1.X.size()<<endl;
 	while(true);
 	cv::Mat img;
 	cv::VideoCapture cap(0);

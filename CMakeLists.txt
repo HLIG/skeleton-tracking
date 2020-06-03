@@ -6,7 +6,7 @@ set( CMAKE_INCLUDE_CURRENT_DIR ON )
 set( CMAKE_AUTOMOC ON )
 set( CMAKE_BUILD_TYPE Release )
 
-set( OpenCV_DIR /usr/local/opencv4.2/lib/cmake/opencv4/)
+#set( OpenCV_DIR /usr/local/opencv4.2/lib/cmake/opencv4/)
 find_package( OpenCV  REQUIRED)
 set(keypoints_tracking_src	${CMAKE_CURRENT_SOURCE_DIR}/keypoints_tracking.cpp
 							${CMAKE_CURRENT_SOURCE_DIR}/keypoints_tracking.h
