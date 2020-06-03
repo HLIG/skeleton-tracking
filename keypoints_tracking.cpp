@@ -19,35 +19,35 @@ static bool isequal(double num,double target)
 static double oks_max=DBL_MIN;
 static double calculate_OKS(Keypoints skeleton1,Keypoints skeleton2)
 {
-	//计算oks，但由于是跟踪用，并没有真实值，因此对OKS进行了自定义，用另一种距离方式来计算两个骨架之间的距离，详情见小论文
-	//当两个骨架越不相似时，自定义的oks越大 oks最大时为keypoints_num*keypoint_oks_max+box_oks_max=14×1.0+5.0=19.0
-	int keypoints_num=skeleton1.keypoints_num;
-	double distance_square_thres=30*30;//距离平方阈值，如果两个骨架的相同关键点欧式距离平方超过这个阈值，则oks+=1
-	double confidence_thres=0.003;//置信度阈值，如果两个骨架的相同关键点中的某一个置信度小于这个阈值，则oks+=1
-	double keypoint_oks_max=1.0;
-	double box_square_thres=60*60;//矩形框中心距离阈值，如果超过这个阈值，则oks+=box_oks_max
-	double box_oks_max=5.0;
-	oks_max=keypoints_num*keypoint_oks_max+box_oks_max;
-	double oks=0.0;
-	for(int i=0;i<keypoints_num;i++)
-	{
-		if((skeleton1.C)[i]>confidence_thres&&(skeleton2.C)[i]>confidence_thres)
-		{
-			double euclidean_distance=((skeleton1.X)[i]-(skeleton2.X)[i])*((skeleton1.X)[i]-(skeleton2.X)[i])+
-									  ((skeleton1.Y)[i]-(skeleton2.Y)[i])*((skeleton1.Y)[i]-(skeleton2.Y)[i]);
-			oks+=(keypoint_oks_max*min(euclidean_distance,distance_square_thres)/distance_square_thres);//即此时每个关键点距离最多使得oks增加keypoint_oks_max，在distance_square_thres取得keypoint_oks_max。距离越远，增加越快，要增加得更快可以使用三次方		
-		}
-		else
-		{
-			oks+=keypoint_oks_max;//有至少1个关键点置信度太低，直接oks+=keypoint_oks_max，
-		}			
-	}
-	//使用二次函数，这样可以满足距离远的时候，oks增加地快一些，距离近的时候oks增加地慢一些
-	double center_distance_square=(skeleton1.center_point.x-skeleton2.center_point.x)*(skeleton1.center_point.x-skeleton2.center_point.x)+
-						   (skeleton1.center_point.y-skeleton2.center_point.y)*(skeleton1.center_point.y-skeleton2.center_point.y);
-	oks+=(box_oks_max*min(center_distance_square,box_square_thres)/box_square_thres);//即此时矩形框中心最多使得oks增加box_oks_max，距离越远，增加越快，要增加得更快可以使用三次方
-	
-	return oks;
+    //计算oks，但由于是跟踪用，并没有真实值，因此对OKS进行了自定义，用另一种距离方式来计算两个骨架之间的距离，详情见小论文
+    //当两个骨架越不相似时，自定义的oks越大 oks最大时为keypoints_num*keypoint_oks_max+box_oks_max=14×1.0+5.0=19.0
+    int keypoints_num=skeleton1.keypoints_num;
+    double distance_square_thres=30*30;//距离平方阈值，如果两个骨架的相同关键点欧式距离平方超过这个阈值，则oks+=1
+    double confidence_thres=0.003;//置信度阈值，如果两个骨架的相同关键点中的某一个置信度小于这个阈值，则oks+=1
+    double keypoint_oks_max=1.0;
+    double box_square_thres=60*60;//矩形框中心距离阈值，如果超过这个阈值，则oks+=box_oks_max
+    double box_oks_max=5.0;
+    oks_max=keypoints_num*keypoint_oks_max+box_oks_max;
+    double oks=0.0;
+    for(int i=0;i<keypoints_num;i++)
+    {
+        if((skeleton1.C)[i]>confidence_thres&&(skeleton2.C)[i]>confidence_thres)
+        {
+            double euclidean_distance=((skeleton1.X)[i]-(skeleton2.X)[i])*((skeleton1.X)[i]-(skeleton2.X)[i])+
+                                      ((skeleton1.Y)[i]-(skeleton2.Y)[i])*((skeleton1.Y)[i]-(skeleton2.Y)[i]);
+            oks+=(keypoint_oks_max*min(euclidean_distance,distance_square_thres)/distance_square_thres);//即此时每个关键点距离最多使得oks增加keypoint_oks_max，在distance_square_thres取得keypoint_oks_max。距离越远，增加越快，要增加得更快可以使用三次方      
+        }
+        else
+        {
+            oks+=keypoint_oks_max;//有至少1个关键点置信度太低，直接oks+=keypoint_oks_max，
+        }           
+    }
+    //使用二次函数，这样可以满足距离远的时候，oks增加地快一些，距离近的时候oks增加地慢一些
+    double center_distance_square=(skeleton1.center_point.x-skeleton2.center_point.x)*(skeleton1.center_point.x-skeleton2.center_point.x)+
+                           (skeleton1.center_point.y-skeleton2.center_point.y)*(skeleton1.center_point.y-skeleton2.center_point.y);
+    oks+=(box_oks_max*min(center_distance_square,box_square_thres)/box_square_thres);//即此时矩形框中心最多使得oks增加box_oks_max，距离越远，增加越快，要增加得更快可以使用三次方
+    
+    return oks;
 }
 static void calculate_Distance_matrix(std::vector<Keypoints>detected_keypoints,std::vector<Keypoints>tracking_keypoints,vector<vector<double>>&Distance_Matrix,vector<vector<double>>&Distance_Matrix_Reverse)
 {
@@ -108,17 +108,17 @@ vector<vector<double>> get_filtered_Matrix(vector<vector<double>>Matrix_origin,v
     return filtered_Matrix;
 }
 int count_keypoints_num(){
-	//根据骨架点连线，来数一下有多少个关键点,写来一开始调试用的，后来并没有用上
-	const std::vector<int>bones={  1,2,   1,5,   2,3,   3,4,   5,6,   6,7,   2,9,   5,12,     9,10,    10,11,    12,13, 13,14,  1,0  };
-	std::unordered_map<int,bool>m;
-	for(int i=0;i<bones.size();++i)
-	{
-		if(m.find(bones[i])==m.end())
-			m.insert(pair<int, bool>(bones[i], true));
-	}
-	cout<<"size"<<m.size()<<endl;
-	return m.size();
-	// cout<<"test in  keypoints_tracking.cpp"<<endl;
+    //根据骨架点连线，来数一下有多少个关键点,写来一开始调试用的，后来并没有用上
+    const std::vector<int>bones={  1,2,   1,5,   2,3,   3,4,   5,6,   6,7,   2,9,   5,12,     9,10,    10,11,    12,13, 13,14,  1,0  };
+    std::unordered_map<int,bool>m;
+    for(int i=0;i<bones.size();++i)
+    {
+        if(m.find(bones[i])==m.end())
+            m.insert(pair<int, bool>(bones[i], true));
+    }
+    cout<<"size"<<m.size()<<endl;
+    return m.size();
+    // cout<<"test in  keypoints_tracking.cpp"<<endl;
 }
 void Single_Skeleton::person_predict()
 {
@@ -132,30 +132,30 @@ void Single_Skeleton::person_predict()
 }
 void Skeleton_Tracking::skeletons_predict()
 {
-	const int people_num=people_skeletons.size();
+    const int people_num=people_skeletons.size();
 //使用kalman滤波来对关键点坐标进行预测
-	for(int i=0;i<people_num;i++)
-	{//对每个人进行卡尔曼预测
-		people_skeletons[i].person_predict();
-	}
+    for(int i=0;i<people_num;i++)
+    {//对每个人进行卡尔曼预测
+        people_skeletons[i].person_predict();
+    }
 }
 void Skeleton_Tracking::track(std::vector<std::vector<double>>detected_skeletons)
 {
-	skeletons_predict();//卡尔曼预测
-	const int detected_num=detected_skeletons.size();
-	const int tracker_num=people_skeletons.size();
-	std::vector<Keypoints> detected_keypoints;
-	std::vector<Keypoints>tracking_keypoints;
-	for(int i=0;i<detected_num;i++)
-	{
-		//将二维vector变成Keypoints类型，方便后面求取oks
-		detected_keypoints.push_back(Keypoints(this->keypoints_num,detected_skeletons[i]));
-	}
-	for(int i=0;i<tracker_num;i++)
-	{
-		//将二维vector变成Keypoints类型，方便后面求取oks
-		tracking_keypoints.push_back(*(people_skeletons[i].person_keypoints));
-	}
+    skeletons_predict();//卡尔曼预测
+    const int detected_num=detected_skeletons.size();
+    const int tracker_num=people_skeletons.size();
+    std::vector<Keypoints> detected_keypoints;
+    std::vector<Keypoints>tracking_keypoints;
+    for(int i=0;i<detected_num;i++)
+    {
+        //将二维vector变成Keypoints类型，方便后面求取oks
+        detected_keypoints.push_back(Keypoints(this->keypoints_num,detected_skeletons[i]));
+    }
+    for(int i=0;i<tracker_num;i++)
+    {
+        //将二维vector变成Keypoints类型，方便后面求取oks
+        tracking_keypoints.push_back(*(people_skeletons[i].person_keypoints));
+    }
     //距离矩阵计算及滤波
     const int rows=detected_num;
     const int cols=tracker_num;
