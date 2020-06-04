@@ -130,20 +130,25 @@ void Single_Skeleton::person_predict()
     } 
     person_keypoints->center_point_update();//对骨架外界矩形进行更新
 }
-void Skeleton_Tracking::skeletons_predict()
+
+void Single_Skeleton::person_correct(Keypoints detected_keypoint)
 {
-    const int people_num=people_skeletons.size();
-//使用kalman滤波来对关键点坐标进行预测
-    for(int i=0;i<people_num;i++)
-    {//对每个人进行卡尔曼预测
-        people_skeletons[i].person_predict();
-    }
+    //匹配成功时，使用检测的关键点对跟踪关键点进行更新
+   
+
+    
 }
-void Skeleton_Tracking::track(std::vector<std::vector<double>>detected_skeletons)
+void Skeleton_Tracking::skeletons_track(std::vector<std::vector<double>>detected_skeletons)
 {
-    skeletons_predict();//卡尔曼预测
     const int detected_num=detected_skeletons.size();
     const int tracker_num=people_skeletons.size();
+    for(int i=0;i<tracker_num;i++)
+    {//对每个人进行卡尔曼预测
+        this->people_skeletons[i].person_predict();
+    }
+
+    
+    
     std::vector<Keypoints> detected_keypoints;
     std::vector<Keypoints>tracking_keypoints;
     for(int i=0;i<detected_num;i++)
@@ -204,13 +209,31 @@ void Skeleton_Tracking::track(std::vector<std::vector<double>>detected_skeletons
         }
     }
 
-    //对于匹配成功的跟踪目标,需要更新其坐标,以及提升其置信度  以下还没改
-    // for(auto &iter:pairs)
-    // {
-    //     target[iter.second].track_frame++;//跟踪帧数增加
-    //     target[iter.second].confidenceIncrease();
-    //     target[iter.second].kalman_correct(measurement[iter.first],ppDetectionRect[iter.first]);
-    // }
+    //对于匹配成功的乘客骨架,需要更新其坐标,以及提升其置信度  
+    for(auto &iter:pairs)
+    {
+        this->people_skeletons[iter.second].track_frame++;//跟踪帧数增加
+        this->people_skeletons[iter.second].confidenceIncrease();
+        this->people_skeletons[iter.second].person_correct(detected_keypoints[iter.second]);//对卡尔曼滤波的坐标进行更新
+    }
+
+    //对于距离太远或者匈牙利匹配失败的跟踪目标,需要降低其置信度,置信度低于一定值,将其从后往前删除
+    for (vector<Single_Skeleton>::iterator k = people_skeletons.end()-1; k != people_skeletons.begin()-1; k--)
+    {
+        if(cols_set.find(std::distance(people_skeletons.begin(),k))!=cols_set.end())//如果匈牙利匹配成功
+            continue;
+        else if (!(*k).confidenceDecrease())//置信度减到0以下,剔除该目标
+        {
+            idTabelUpdate((*k).id);
+            people_skeletons.erase(k);
+        }
+        else//置信度没减到0以下,用上次的跟踪结果更新卡尔曼滤波器
+        {
+            (*k).track_frame++;//跟踪帧数增加
+            (*k).kalman_correct((*k).position(),(*k).box);
+        }
+
+    }
     // PeopleFlow();//人流量计数
     // //对于距离太远的跟踪目标,需要降低其置信度,置信度低于一定值,将其从后往前删除
     // for (vector<MyPersonKalmanFilter>::iterator k = target.end()-1; k != target.begin()-1; k--)
