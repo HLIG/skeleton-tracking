@@ -53,8 +53,9 @@ public:
     Keypoints *person_keypoints;//单人的跟踪关键点结果
     std::vector<cv::KalmanFilter>keypoints_kalmanfilter;//单人的所有关键点kalman跟踪
     
-    Single_Skeleton(int keypoints_num,std::vector<double>keypoints)
+    Single_Skeleton(int keypoints_num,Keypoints keypoints)
     {
+        static Keypoints keypoints_static(keypoints);
         this->keypoints_num=keypoints_num;
         //置信度参数初始化
         confidence = 15;//初始置信度给15
@@ -62,7 +63,7 @@ public:
         confidence_dec = 0;
         confidence_linear_decrease_frame=10;
         //关键点坐标置信度初始化
-        person_keypoints=new Keypoints(keypoints_num,keypoints);
+        person_keypoints=&keypoints_static;
         //卡尔曼跟踪参数初始化
         for (int i = 0; i < keypoints_num; ++i)
         {

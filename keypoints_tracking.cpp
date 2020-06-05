@@ -134,9 +134,39 @@ void Single_Skeleton::person_predict()
 void Single_Skeleton::person_correct(Keypoints detected_keypoint)
 {
     //匹配成功时，使用检测的关键点对跟踪关键点进行更新
-   
 
-    
+    for(int i=0;i<keypoints_num;i++)
+    {
+        cv::Mat point_mat = (cv::Mat_<float>(2, 1) << (detected_keypoint.X)[i], (detected_keypoint.Y)[i]);
+        keypoints_kalmanfilter[i].correct(point_mat);
+        (person_keypoints->X)[i]=(detected_keypoint.X)[i];
+        (person_keypoints->Y)[i]=(detected_keypoint.Y)[i];
+    }
+    person_keypoints->center_point_update();//对骨架外界矩形进行更新
+}
+void Skeleton_Tracking::idTabelUpdate(int id)
+{
+    idTabel[id] = false;
+
+    while (!idTabel[idTabel.size() - 1])
+        idTabel.pop_back();
+}
+
+int Skeleton_Tracking::idCreator()
+{
+    unsigned int id = 0;
+    while (idTabel[id])
+    {
+        id++;
+        if (id == idTabel.size())
+        {
+            idTabel.push_back(true);
+            break;
+        }
+    }
+    idTabel[id] = true;
+
+    return id;
 }
 void Skeleton_Tracking::skeletons_track(std::vector<std::vector<double>>detected_skeletons)
 {
@@ -230,38 +260,20 @@ void Skeleton_Tracking::skeletons_track(std::vector<std::vector<double>>detected
         else//置信度没减到0以下,用上次的跟踪结果更新卡尔曼滤波器
         {
             (*k).track_frame++;//跟踪帧数增加
-            (*k).kalman_correct((*k).position(),(*k).box);
+            (*k).person_correct(*((*k).person_keypoints));// 使用预测结果来进行更新
         }
 
     }
-    // PeopleFlow();//人流量计数
-    // //对于距离太远的跟踪目标,需要降低其置信度,置信度低于一定值,将其从后往前删除
-    // for (vector<MyPersonKalmanFilter>::iterator k = target.end()-1; k != target.begin()-1; k--)
-    // {
-    //     if(cols_set.find(std::distance(target.begin(),k))!=cols_set.end())//如果匈牙利匹配成功
-    //         continue;
-    //     else if (!(*k).confidenceDecrease())//置信度减到0以下,剔除该目标
-    //     {
-    //         idTabelUpdate((*k).id);
-    //         PeopleFlowFix(*k);//修正人流量
-    //         target.erase(k);
-    //     }
-    //     else//置信度没减到0以下,用上次的跟踪结果更新卡尔曼滤波器
-    //     {
-    //         (*k).track_frame++;//跟踪帧数增加
-    //         (*k).kalman_correct((*k).position(),(*k).box);
-    //     }
-
-    // }
+    
     // //对于距离太远的检测目标,将其作为新目标,加入到跟踪列表中
-    // for(int i=0;i<measurement.size();i++)
-    // {
-    //     #ifdef DEBUG
-    //     cout<<"产生新目标"<<endl;
-    //     #endif
-    //     if(rows_set.find(i)==rows_set.end())//没有匈牙利匹配成功的目标
-    //     {
-    //         target.push_back(MyPersonKalmanFilter(idCreator(), measurement[i],ppDetectionRect[i]));
-    //     }
-    // }
+    for(int i=0;i<detected_num;i++)
+    {
+        #ifdef DEBUG
+        cout<<"产生新目标"<<endl;
+        #endif
+        if(rows_set.find(i)==rows_set.end())//没有匈牙利匹配成功的目标
+        {
+            people_skeletons.push_back(Single_Skeleton(this->keypoints_num, detected_keypoints[i]));
+        }
+    }
 }
