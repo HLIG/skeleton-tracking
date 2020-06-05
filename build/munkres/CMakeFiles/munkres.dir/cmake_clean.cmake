@@ -1,6 +1,6 @@
 file(REMOVE_RECURSE
-  "libmunkres.pdb"
   "libmunkres.a"
+  "libmunkres.pdb"
 )
 
 # Per-language clean rules from dependency scanning.

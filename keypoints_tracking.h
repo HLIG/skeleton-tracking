@@ -65,10 +65,12 @@ public:
     Keypoints *person_keypoints;//单人的跟踪关键点结果
     std::vector<cv::KalmanFilter>keypoints_kalmanfilter;//单人的所有关键点kalman跟踪
     
-    //中心轨迹
+    //外接矩形的中心轨迹
     int max_trajectory_size=50;//最多保留历史50帧的中心轨迹
-    std::vector<cv::Point> trajectory;//历史轨迹
+    std::vector<char> v;<cv::Point> trajectory;//历史轨迹
     void add_trajectory(cv::Point point);//把点添加到轨迹中
+
+    //构造函数
     Single_Skeleton(int id,int keypoints_num,Keypoints keypoints)
     {
         static Keypoints keypoints_static(keypoints);
@@ -117,10 +119,8 @@ public:
             keypoints_kalmanfilter[i].temp4.create(2, 4, CV_32F);
             keypoints_kalmanfilter[i].temp5.create(2, 1, CV_32F);
         }
-
-        
-        
-        // 
+  
+     
         
     }
     ~Single_Skeleton()

@@ -1,4 +1,4 @@
-#define _GLIBCXX_USE_CXX11_ABI 0
+// #define _GLIBCXX_USE_CXX11_ABI 0
 /* 
 Author:HLG
 Date:2020年6月5日
@@ -112,7 +112,7 @@ vector<vector<double>> get_filtered_Matrix(vector<vector<double>>Matrix_origin,v
     return filtered_Matrix;
 }
 int count_keypoints_num(){
-    //根据骨架点连线，来数一下有多少个关键点,写来一开始调试用的，后来并没有用上
+    //根据骨架点连线，来数一下有多少个关键点,顺便将关键点的序号进行重排，写来一开始调试用的。。后来并没有用上 
     const std::vector<int>bones={  1,2,   1,5,   2,3,   3,4,   5,6,   6,7,   2,9,   5,12,     9,10,    10,11,    12,13, 13,14,  1,0  };
     std::unordered_map<int,bool>m;
     for(int i=0;i<bones.size();++i)
@@ -142,8 +142,6 @@ int count_keypoints_num(){
             remap.insert(pair<int, int>(bones_resort[i], i));
             // printf("%d,%d,%d\n",bones_resort[i], i,remap[bones_resort[i]] );
         }
-
-        
     }
    
     for(int i=0;i<bones.size();i++)
@@ -160,7 +158,11 @@ int count_keypoints_num(){
 }
 void Single_Skeleton::add_trajectory(cv::Point point)
 {
-
+    if(trajectory.size()>=max_trajectory_size)
+    {
+        trajectory.pop();
+    }
+    trajectory.push(point);
 }
 void Single_Skeleton::person_predict()
 {
@@ -170,7 +172,6 @@ void Single_Skeleton::person_predict()
         (person_keypoints->X)[i]=int(this->keypoints_kalmanfilter[i].statePost.at<float>(0));
         (person_keypoints->Y)[i]=int(this->keypoints_kalmanfilter[i].statePost.at<float>(1));
     } 
-    add_trajectory(person_keypoints->center_point_update());//对骨架外界矩形进行更新
 }
 
 void Single_Skeleton::person_correct(Keypoints detected_keypoint)
@@ -350,7 +351,12 @@ void Skeleton_Tracking::draw_skeletons(cv::Mat img,double confidence_thres,bool 
         //如果需要画出行人中心轨迹
         if(draw_trajectory)
         {
-
+            if(people_skeletons[i].trajectory.size()>0)
+            {
+                cv::circle(img,people_skeletons[i].trajectory.back(),1,people_skeletons[i].color,-1);
+                for(int k=people_skeletons[i].trajectory.size()-1;k>0;--k)
+                    cv::line(img,people_skeletons[i].trajectory[k],people_skeletons[i].trajectory[k-1],people_skeletons[i].color,1);
+            }
         }
     }
     
