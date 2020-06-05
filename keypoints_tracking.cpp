@@ -1,5 +1,9 @@
 #define _GLIBCXX_USE_CXX11_ABI 0
-
+/* 
+Author:HLG
+Date:2020年6月5日
+huang.liguang@qq.com
+*/
 #include<iostream>
 
 #include<unordered_map>
@@ -156,7 +160,7 @@ int count_keypoints_num(){
 }
 void Single_Skeleton::add_trajectory(cv::Point point)
 {
-    
+
 }
 void Single_Skeleton::person_predict()
 {

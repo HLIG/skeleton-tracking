@@ -1,3 +1,8 @@
+/* 
+Author:HLG
+Date:2020年6月5日
+huang.liguang@qq.com
+*/
 #pragma once
 #include <opencv2/opencv.hpp>
 #include <vector>
