@@ -3,6 +3,15 @@
 #include <vector>
 extern int count_keypoints_num();
 
+static const std::vector<cv::Scalar>color_list={
+    cv::Scalar(0,255,0),
+    cv::Scalar(0,0,255),
+    cv::Scalar(255,0,0),
+    cv::Scalar(255,255,0),
+    cv::Scalar(0,255,255),
+    cv::Scalar(255,0,255),
+    cv::Scalar(255,255,255)
+};
 class Keypoints
 {
 public:
@@ -17,18 +26,16 @@ public:
             this->C.push_back(keypoints[i+2]);
 
         }
-        this->center_point.x=(*std::min_element(X.begin(),X.end())+
-                            *std::max_element(X.begin(),X.end()))/2;
-        this->center_point.y=(*std::min_element(Y.begin(),Y.end())+
-                            *std::max_element(Y.begin(),Y.end()))/2;
+        center_point_update();
     }
-    void center_point_update()
+    cv::Point center_point_update()
     {
         //对骨架外界矩形进行更新
         this->center_point.x=(*std::min_element(X.begin(),X.end())+
                             *std::max_element(X.begin(),X.end()))/2;
         this->center_point.y=(*std::min_element(Y.begin(),Y.end())+
                             *std::max_element(Y.begin(),Y.end()))/2;
+        return center_point;
     }
     int keypoints_num;
     std::vector<double> X;
@@ -53,10 +60,17 @@ public:
     Keypoints *person_keypoints;//单人的跟踪关键点结果
     std::vector<cv::KalmanFilter>keypoints_kalmanfilter;//单人的所有关键点kalman跟踪
     
-    Single_Skeleton(int keypoints_num,Keypoints keypoints)
+    //中心轨迹
+    int max_trajectory_size=50;//最多保留历史50帧的中心轨迹
+    std::vector<cv::Point> trajectory;//历史轨迹
+    void add_trajectory(cv::Point point);//把点添加到轨迹中
+    Single_Skeleton(int id,int keypoints_num,Keypoints keypoints)
     {
         static Keypoints keypoints_static(keypoints);
         this->keypoints_num=keypoints_num;
+        this->id=id;
+        this->color=color_list[id%color_list.size()];
+        // this->max_trajectory_size=50;
         //置信度参数初始化
         confidence = 15;//初始置信度给15
         confidence_inc = 0;
@@ -101,7 +115,7 @@ public:
 
         
         
-        
+        // 
         
     }
     ~Single_Skeleton()
@@ -145,11 +159,15 @@ public:
     Skeleton_Tracking(int keypoints_num)
     {
         this->keypoints_num=keypoints_num;
+        bones_num=bones.size()/2;
     }
+    const std::vector<int>bones={1,2, 1,5, 2,3, 3,4, 5,6, 6,7, 2,8, 5,11, 8,9, 9,10, 11,12, 12,13, 1,0};//骨架连接
     int keypoints_num;
+    int bones_num;
     std::vector<Single_Skeleton>people_skeletons;//包含了多个人
-
+    
     void skeletons_track(std::vector<std::vector<double>>detected_skeletons);//跟踪！
+    void draw_skeletons(cv::Mat img,double confidence_thres=0.05,bool draw_trajectory=false);
     std::vector<bool> idTabel;
     void idTabelUpdate(int id);
     int idCreator();

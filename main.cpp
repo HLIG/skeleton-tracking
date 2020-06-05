@@ -10,8 +10,11 @@
 using namespace std;
 using namespace cv;
 const static int keypoints_num=14;//在删减不必要的关键点之后，还剩下14个关键点
+
 int main()
 {
+    
+    
     int keypoints_num= count_keypoints_num();
     cout<<"keypoints_num"<<keypoints_num<<endl;
     //Keypoints Keypoints1(keypoints_num);

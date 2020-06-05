@@ -23,7 +23,7 @@ static double calculate_OKS(Keypoints skeleton1,Keypoints skeleton2)
     //当两个骨架越不相似时，自定义的oks越大 oks最大时为keypoints_num*keypoint_oks_max+box_oks_max=14×1.0+5.0=19.0
     int keypoints_num=skeleton1.keypoints_num;
     double distance_square_thres=30*30;//距离平方阈值，如果两个骨架的相同关键点欧式距离平方超过这个阈值，则oks+=1
-    double confidence_thres=0.003;//置信度阈值，如果两个骨架的相同关键点中的某一个置信度小于这个阈值，则oks+=1
+    double confidence_thres=0.05;//置信度阈值，如果两个骨架的相同关键点中的某一个置信度小于这个阈值，则oks+=1
     double keypoint_oks_max=1.0;
     double box_square_thres=60*60;//矩形框中心距离阈值，如果超过这个阈值，则oks+=box_oks_max
     double box_oks_max=5.0;
@@ -116,9 +116,47 @@ int count_keypoints_num(){
         if(m.find(bones[i])==m.end())
             m.insert(pair<int, bool>(bones[i], true));
     }
+
+    //重排顺序
+    std::vector<int>bones_resort;
+    std::unordered_map<int,bool> ::iterator it;
+    it=m.begin();
+    while(it != m.end())
+    {
+        bones_resort.push_back(it->first);
+        // cout<<"first->:"<<it->first<<endl;
+        // cout<<"second->:"<<it->second<<endl;
+        it++;
+    } 
+    sort(bones_resort.begin(),bones_resort.end());
+    std::unordered_map<int,int>remap;
+    for(int i=0;i<bones_resort.size();i++)
+    {
+        if(remap.find(bones_resort[i])==remap.end())
+        {
+
+            remap.insert(pair<int, int>(bones_resort[i], i));
+            // printf("%d,%d,%d\n",bones_resort[i], i,remap[bones_resort[i]] );
+        }
+
+        
+    }
+   
+    for(int i=0;i<bones.size();i++)
+    {
+        
+        cout<<remap[bones[i]]<<',';
+    }
+    cout<<endl;
+
+
     cout<<"size"<<m.size()<<endl;
     return m.size();
     // cout<<"test in  keypoints_tracking.cpp"<<endl;
+}
+void Single_Skeleton::add_trajectory(cv::Point point)
+{
+    
 }
 void Single_Skeleton::person_predict()
 {
@@ -128,7 +166,7 @@ void Single_Skeleton::person_predict()
         (person_keypoints->X)[i]=int(this->keypoints_kalmanfilter[i].statePost.at<float>(0));
         (person_keypoints->Y)[i]=int(this->keypoints_kalmanfilter[i].statePost.at<float>(1));
     } 
-    person_keypoints->center_point_update();//对骨架外界矩形进行更新
+    add_trajectory(person_keypoints->center_point_update());//对骨架外界矩形进行更新
 }
 
 void Single_Skeleton::person_correct(Keypoints detected_keypoint)
@@ -142,8 +180,9 @@ void Single_Skeleton::person_correct(Keypoints detected_keypoint)
         (person_keypoints->X)[i]=(detected_keypoint.X)[i];
         (person_keypoints->Y)[i]=(detected_keypoint.Y)[i];
     }
-    person_keypoints->center_point_update();//对骨架外界矩形进行更新
+    add_trajectory(person_keypoints->center_point_update());//对骨架外界矩形进行更新
 }
+
 void Skeleton_Tracking::idTabelUpdate(int id)
 {
     idTabel[id] = false;
@@ -168,6 +207,7 @@ int Skeleton_Tracking::idCreator()
 
     return id;
 }
+
 void Skeleton_Tracking::skeletons_track(std::vector<std::vector<double>>detected_skeletons)
 {
     const int detected_num=detected_skeletons.size();
@@ -244,7 +284,7 @@ void Skeleton_Tracking::skeletons_track(std::vector<std::vector<double>>detected
     {
         this->people_skeletons[iter.second].track_frame++;//跟踪帧数增加
         this->people_skeletons[iter.second].confidenceIncrease();
-        this->people_skeletons[iter.second].person_correct(detected_keypoints[iter.second]);//对卡尔曼滤波的坐标进行更新
+        this->people_skeletons[iter.second].person_correct(detected_keypoints[iter.first]);//对卡尔曼滤波的坐标进行更新
     }
 
     //对于距离太远或者匈牙利匹配失败的跟踪目标,需要降低其置信度,置信度低于一定值,将其从后往前删除
@@ -265,7 +305,7 @@ void Skeleton_Tracking::skeletons_track(std::vector<std::vector<double>>detected
 
     }
     
-    // //对于距离太远的检测目标,将其作为新目标,加入到跟踪列表中
+    // //对于距离太远的乘客骨架,将其作为新目标,加入到跟踪列表中
     for(int i=0;i<detected_num;i++)
     {
         #ifdef DEBUG
@@ -273,7 +313,41 @@ void Skeleton_Tracking::skeletons_track(std::vector<std::vector<double>>detected
         #endif
         if(rows_set.find(i)==rows_set.end())//没有匈牙利匹配成功的目标
         {
-            people_skeletons.push_back(Single_Skeleton(this->keypoints_num, detected_keypoints[i]));
+            people_skeletons.push_back(Single_Skeleton(idCreator(),this->keypoints_num, detected_keypoints[i]));
         }
     }
+}
+void Skeleton_Tracking::draw_skeletons(cv::Mat img,double confidence_thres,bool draw_trajectory)
+{//画出置信度超过阈值的关键点所在的骨架
+    int people_num=people_skeletons.size();
+    for(int i=0;i<people_num;++i) {
+        for(int j=0;j<bones_num;++j)
+        {
+            const int index1=bones[j*2];
+            const int index2=bones[j*2+1];
+            
+            const double confidence1=((people_skeletons[i].person_keypoints)->C)[index1];//第i个人的第index1个关键点的置信度
+            const double confidence2=((people_skeletons[i].person_keypoints)->C)[index2];//第i个人的第index2个关键点的置信度
+            cout<<confidence1<<" "<<confidence2<<endl;
+            if(min(confidence1,confidence2)>confidence_thres)
+            {
+                const double point1_x=((people_skeletons[i].person_keypoints)->X)[index1];
+                const double point1_y=((people_skeletons[i].person_keypoints)->Y)[index1];
+                const double point2_x=((people_skeletons[i].person_keypoints)->X)[index2];
+                const double point2_y=((people_skeletons[i].person_keypoints)->Y)[index2];
+                const cv::Point point1(point1_x,point1_y);                       
+                const cv::Point point2(point2_x,point2_y);
+                cv::line(img,point1,point2, people_skeletons[i].color, 2 );
+            }
+            
+            // cv::circle(dst,cv::Point(result[i*3],result[i*3+1]),2,cv::Scalar(0,255,0),-1);
+            // putText(dst, to_string(i), cv::Point(result[i*3],result[i*3+1]), FONT_HERSHEY_SIMPLEX, 0.6, Scalar(0, 255, 0), 1);
+        }
+        //如果需要画出行人中心轨迹
+        if(draw_trajectory)
+        {
+
+        }
+    }
+    
 }
