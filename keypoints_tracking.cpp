@@ -382,7 +382,7 @@ void Skeleton_Tracking::draw_skeletons(cv::Mat img,double confidence_thres,bool 
             
             const double confidence1=((people_skeletons[i].person_keypoints).C)[index1];//第i个人的第index1个关键点的置信度
             const double confidence2=((people_skeletons[i].person_keypoints).C)[index2];//第i个人的第index2个关键点的置信度
-            std::cout<<confidence1<<" "<<confidence2<<std::endl;
+            // std::cout<<confidence1<<" "<<confidence2<<std::endl;
             if(std::min(confidence1,confidence2)>confidence_thres)
             {
                 const double point1_x=((people_skeletons[i].person_keypoints).X)[index1];

@@ -8,7 +8,7 @@ huang.liguang@qq.com
 #include <opencv2/highgui.hpp>
 #include<vector>
 #include<string>
-// #include
+#include<ctime>
 #include<iostream>
 #include"keypoints_tracking.h"
 
@@ -81,8 +81,9 @@ int main()
     {
         cv::Mat img=cv::Mat::zeros(img_row,img_col,CV_8UC3);
         std::vector<std::vector<double>>skeleton_data=generate_skeleton_data();
-        
+        clock_t start_time = clock();
         skeleton_tracker.skeletons_track(skeleton_data);
+        cout << "main time:" << double(clock() - start_time) / CLOCKS_PER_SEC << endl;
         skeleton_tracker.draw_skeletons(img);
         cv::imshow("skeleton_track_result",img);
         cv::waitKey(30);
