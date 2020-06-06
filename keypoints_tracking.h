@@ -122,13 +122,14 @@ public:
 class Skeleton_Tracking  
 {
 public:
-    Skeleton_Tracking(int keypoints_num)
+    Skeleton_Tracking(int keypoints_num,const std::vector<int>&bones)
     {
         idTabel.push_back(true);    //id 0 is always used
         this->keypoints_num=keypoints_num;
+        this->bones=bones;
         bones_num=bones.size()/2;
     }
-    const std::vector<int>bones={1,2, 1,5, 2,3, 3,4, 5,6, 6,7, 2,8, 5,11, 8,9, 9,10, 11,12, 12,13, 1,0};//骨架连接
+    std::vector<int>bones;//骨架连接
     int keypoints_num;
     int bones_num;
     std::vector<Single_Skeleton>people_skeletons;//包含了多个人

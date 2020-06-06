@@ -15,6 +15,7 @@ huang.liguang@qq.com
 using namespace std;
 using namespace cv;
 const static int keypoints_num=14;//在删减不必要的关键点之后，还剩下14个关键点
+const std::vector<int>bones={1,2, 1,5, 2,3, 3,4, 5,6, 6,7, 2,8, 5,11, 8,9, 9,10, 11,12, 12,13, 1,0};//骨架连接
 
 void keypoints_num_resort_test()
 {
@@ -75,7 +76,7 @@ int main()
 
     int img_row=480;
     int img_col=640;
-    Skeleton_Tracking skeleton_tracker(keypoints_num);
+    Skeleton_Tracking skeleton_tracker(keypoints_num,bones);
     cv::namedWindow("skeleton_track_result",0);
     while(true)
     {
