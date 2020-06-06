@@ -20,15 +20,30 @@ static const std::vector<cv::Scalar>color_list={
 class Keypoints
 {
 public:
+    Keypoints(const Keypoints & keypoints)
+    {
+        
+        this->keypoints_num=keypoints.keypoints_num;
+        this->X=keypoints.X;
+        this->Y=keypoints.Y;
+        this->C=keypoints.C;
+        // for (int i = 0; i < keypoints_num; ++i)
+        // {
+        //     std::cout<<"C in copy:"<<this->C[i]<<std::endl;
+        // }
+        
+        center_point_update();
+    }
     Keypoints(int keypoints_num,std::vector<double>keypoints)
     {
         //根据关键点的数量和输入数据类型，将其进行转换 keypoints为数组（x,y,c）*关键点数目
         this->keypoints_num=keypoints_num;
         for(int i=0;i<keypoints_num;i++)
         {
-            this->X.push_back(keypoints[i]);
-            this->Y.push_back(keypoints[i+1]);
-            this->C.push_back(keypoints[i+2]);
+            this->X.push_back(keypoints[3*i]);
+            this->Y.push_back(keypoints[3*i+1]);
+            this->C.push_back(keypoints[3*i+2]);
+            // std::cout<<"C in constructor:"<<this->C[i]<<std::endl;
 
         }
         center_point_update();
@@ -62,71 +77,17 @@ public:
     int confidence_dec;//连续匹配失败的帧数
     int confidence_linear_decrease_frame ;//置信度分段递减阈值
     // Skeleton(int id,cv::Scalar color,坐标置信度);
-    Keypoints *person_keypoints;//单人的跟踪关键点结果
+    Keypoints person_keypoints;//单人的跟踪关键点结果
     std::vector<cv::KalmanFilter>keypoints_kalmanfilter;//单人的所有关键点kalman跟踪
     
     //外接矩形的中心轨迹
     int max_trajectory_size=50;//最多保留历史50帧的中心轨迹
-    std::vector<char> v;<cv::Point> trajectory;//历史轨迹
+    std::vector<cv::Point> trajectory;//历史轨迹
     void add_trajectory(cv::Point point);//把点添加到轨迹中
 
     //构造函数
-    Single_Skeleton(int id,int keypoints_num,Keypoints keypoints)
-    {
-        static Keypoints keypoints_static(keypoints);
-        this->keypoints_num=keypoints_num;
-        this->id=id;
-        this->color=color_list[id%color_list.size()];
-        // this->max_trajectory_size=50;
-        //置信度参数初始化
-        confidence = 15;//初始置信度给15
-        confidence_inc = 0;
-        confidence_dec = 0;
-        confidence_linear_decrease_frame=10;
-        //关键点坐标置信度初始化
-        person_keypoints=&keypoints_static;
-        //卡尔曼跟踪参数初始化
-        for (int i = 0; i < keypoints_num; ++i)
-        {
-            this->keypoints_kalmanfilter.push_back(cv::KalmanFilter(4,2,0));//状态变量、观测变量、控制变量的维度
-        }
-        
-        for(int i=0;i<keypoints_num;i++)
-        {
-            keypoints_kalmanfilter[i].statePre = cv::Mat::zeros(4, 1, CV_32F);
-            keypoints_kalmanfilter[i].statePost = cv::Mat::zeros(4, 1, CV_32F);   //x
-            keypoints_kalmanfilter[i].statePost.at<float>(0) = (person_keypoints->X)[i];
-            keypoints_kalmanfilter[i].statePost.at<float>(1) = (person_keypoints->Y)[i];
-
-        //    transitionMatrix = *(Mat_<float>(4, 4) << 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1);//opencv2
-            keypoints_kalmanfilter[i].transitionMatrix=(cv::Mat_<float>(4, 4) << 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1);//opencv4
-            keypoints_kalmanfilter[i].controlMatrix.release();    //B
-            keypoints_kalmanfilter[i].measurementMatrix = cv::Mat::zeros(2, 4, CV_32F);   //H
-            setIdentity(keypoints_kalmanfilter[i].measurementMatrix);
-            keypoints_kalmanfilter[i].gain = cv::Mat::zeros(4, 2, CV_32F);    //K
-
-            keypoints_kalmanfilter[i].errorCovPre = cv::Mat::zeros(4, 4, CV_32F);
-            keypoints_kalmanfilter[i].errorCovPost = cv::Mat::zeros(4, 4, CV_32F);    //P
-            setIdentity(keypoints_kalmanfilter[i].errorCovPost, cv::Scalar::all(1));
-            keypoints_kalmanfilter[i].processNoiseCov = cv::Mat::eye(4, 4, CV_32F);   //Q
-            setIdentity(keypoints_kalmanfilter[i].processNoiseCov, cv::Scalar::all(1e-3));
-            keypoints_kalmanfilter[i].measurementNoiseCov = cv::Mat::eye(2, 2, CV_32F);   //R
-            setIdentity(keypoints_kalmanfilter[i].measurementNoiseCov, cv::Scalar::all(1e-6));
-
-            keypoints_kalmanfilter[i].temp1.create(4, 4, CV_32F);
-            keypoints_kalmanfilter[i].temp2.create(2, 4, CV_32F);
-            keypoints_kalmanfilter[i].temp3.create(2, 2, CV_32F);
-            keypoints_kalmanfilter[i].temp4.create(2, 4, CV_32F);
-            keypoints_kalmanfilter[i].temp5.create(2, 1, CV_32F);
-        }
-  
-     
-        
-    }
-    ~Single_Skeleton()
-    {
-        delete person_keypoints;
-    }
+    Single_Skeleton(int id,int keypoints_num,Keypoints keypoints);
+    ~Single_Skeleton(){}
     void confidenceIncrease()
     {
         confidence_inc++;
@@ -163,6 +124,7 @@ class Skeleton_Tracking
 public:
     Skeleton_Tracking(int keypoints_num)
     {
+        idTabel.push_back(true);    //id 0 is always used
         this->keypoints_num=keypoints_num;
         bones_num=bones.size()/2;
     }

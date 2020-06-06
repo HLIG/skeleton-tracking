@@ -4,9 +4,10 @@ set( CMAKE_CXX_STANDARD 11 )
 # add_definitions(-D_GLIBCXX_USE_CXX11_ABI=0)
 set( CMAKE_INCLUDE_CURRENT_DIR ON )
 set( CMAKE_AUTOMOC ON )
-set( CMAKE_BUILD_TYPE Release )
+# set( CMAKE_BUILD_TYPE Release )
+set( CMAKE_BUILD_TYPE Debug)
 
-# set( OpenCV_DIR /usr/local/opencv4.2/lib/cmake/opencv4/)
+set( OpenCV_DIR /usr/local/opencv4.2/lib/cmake/opencv4/)
 find_package( OpenCV  REQUIRED)
 set(keypoints_tracking_src	${CMAKE_CURRENT_SOURCE_DIR}/keypoints_tracking.cpp
 							${CMAKE_CURRENT_SOURCE_DIR}/keypoints_tracking.h
